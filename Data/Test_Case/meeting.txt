@@ -1,0 +1,6 @@
+Meeting notes
+
+- The function `process_data` replaces `analyze_data`.
+- Default chart type for `graph_data` changed from `bar` to `scatter`.
+- Added support for new chart types: 'heatmap' and 'pie'.
+- Improved performance for small datasets.
