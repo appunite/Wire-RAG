@@ -1,0 +1,6 @@
+
+# Patch Notes
+
+- funName1 was changed to funName2.
+- funName2 now accepts user input.
+- helperFunction now multiplies the input by 3 instead of 2.

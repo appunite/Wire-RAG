@@ -1,0 +1,6 @@
+
+# Patch Notes
+
+- Chat functionality replaced with file transfer.
+- Message handling functions were changed to handle file data.
+- Changed port from 6666 to 1234

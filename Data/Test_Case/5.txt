@@ -1,0 +1,6 @@
+
+# Patch Notes
+
+- reverse_string was renamed to analyze_text.
+- analyze_text now performs text analysis instead of reversing a string.
+- helper_function now performs sentiment analysis.

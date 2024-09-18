@@ -1,0 +1,5 @@
+
+# Patch Notes
+
+- Button click action changed from text display to form submission.
+- Form submission now doesn't trigger an alert message.

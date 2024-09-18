@@ -1,0 +1,6 @@
+
+# Patch Notes
+
+- process_file was renamed to process_input.
+- process_input now accepts user input instead of reading from a file.
+- helper_function now converts text to lowercase instead of uppercase.

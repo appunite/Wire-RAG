@@ -1,0 +1,5 @@
+
+# Patch Notes
+
+- fetch_images was renamed to fetch_data.
+- The program now downloads image URLs instead of just fetching the page title.
