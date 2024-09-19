@@ -1,49 +1,47 @@
 # DataAnalyzer Project Documentation
 
-## Overview
-The DataAnalyzer project provides a flexible and optimized solution for processing datasets to generate useful statistics and insights. The project is designed to handle datasets of varying sizes efficiently.
+## Module Name: DataAnalyzer
+## Version: 2.5.0
+## Author: Tech Solutions
 
-## Module Information
-- Module Name: DataAnalyzer
-- Current Version: 2.5.0
-- Author: Tech Solutions
+## Overview:
+The DataAnalyzer project provides a fast and optimized approach to data analysis, suitable for small datasets in personal and academic projects. It offers various functions for processing datasets and generating basic statistics and visualizations.
 
-## Functions
-1. **analyze_data(dataset: list) -> dict**
-   - Description: This function calculates basic statistics such as Mean, Median, and Standard Deviation from the input dataset.
-   - Parameters:
-     - dataset (list): Input list of numerical values.
-   - Returns: A dictionary containing the calculated statistics.
-   - Usage Example: 
-     ```python
-     from DataAnalyzer import analyze_data
-     dataset = [12, 45, 67, 23, 89]
-     stats = analyze_data(dataset)
-     print(stats)
-     ```
-
-2. **visualize_data(dataset: list, chart_type: str = 'bar') -> None**
-   - Description: This function generates visualizations for the provided dataset in the form of bar, line, or scatter charts.
-   - Parameters:
-     - dataset (list): Input list of values.
-     - chart_type (str): Type of chart to generate (default is 'bar').
-   - Returns: None
-
-## Dependencies
-- Python 3.8+
-- matplotlib
-- numpy
-
-## Installation
-1. Install the DataAnalyzer package using pip:
-   ```
-   pip install data-analyzer
+## Functions:
+1. **process_data(dataset: list) -> dict**
+   This function processes the dataset and returns basic statistics such as:
+   - Mean
+   - Mode
+   - Variance
+   Usage Example:
+   ```python
+   from DataAnalyzer import process_data
+   dataset = [2, 8, 22, 18, 25]
+   stats = process_data(dataset)
    ```
 
-## How to Use
-1. Import the module into your Python script.
-2. Call the functions as demonstrated in the usage examples provided above.
+2. **graph_data(dataset: list, chart: str = 'scatter') -> None**
+   This function generates a chart based on the dataset. The default chart type is 'scatter'.
+   Example:
+   ```python
+   from DataAnalyzer import graph_data
+   dataset = [2, 8, 22, 18, 25]
+   graph_data(dataset, 'scatter')
+   ```
 
-## Additional Notes
-- The DataAnalyzer project aims to provide a fast and optimized approach to data analysis, suitable for personal and academic projects.
-- For large-scale datasets, consider using alternative solutions optimized for handling extensive data volumes.
+## Installation:
+Install the DataAnalyzer package via pip:
+```
+pip install analyzer-package
+```
+
+## Dependencies:
+- Python 3.6+
+- pandas
+- seaborn
+
+## Notes:
+- The function `process_data` replaces `analyze_data`.
+- Default chart type for `graph_data` changed from `bar` to `scatter`.
+- Added support for new chart types: 'heatmap' and 'pie'.
+- Improved performance for small datasets.
