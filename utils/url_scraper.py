@@ -225,7 +225,8 @@ def extract_content_and_metadata(url: str, date_formats: list[str], date_pattern
             elif element.name in ['p', 'ul', 'ol'] and current_header:
                 # Append the text under the last seen headline
                 value = content_by_headline[current_header] if current_header in content_by_headline else ""
-                content_by_headline[current_header] = f"{value} {element.get_text(strip=True).replace('\n', ' ')}"
+                new_content = element.get_text(strip=True).replace('\n', ' ')
+                content_by_headline[current_header] = f"{value} {new_content}"
 
         result_dicts = []
         for headline, content in content_by_headline.items():
