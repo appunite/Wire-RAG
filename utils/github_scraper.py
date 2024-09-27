@@ -76,15 +76,17 @@ async def fetch_md_files(session: aiohttp.ClientSession, repo_full_name: str,
         if item['type'] == 'file' and item['name'].endswith('.md'):
             # Fetch .md file along with its download URL and other metadata
             md_files.append({
-                'repo_full_name': repo_full_name,
-                'path': item['path'],
-                'self_url': item['url'],
-                'html_url': item['html_url'],
-                'git_url': item['git_url'],
-                'download_url': item['download_url'],
-                'last_modified': ''  # Placeholder for last modified date
+                'content': await fetch_file_content(item['download_url']),
+                'metadata': {
+                    'url': item['html_url'],
+                    'title': repo_full_name.split('/')[-1] + '/' + item['path'],
+                    'headline': '', # url_scraper document has this field
+                    'date': await fetch_last_modified_date(session, repo_full_name=repo_full_name,
+                                                           file_path=item['path'], api_key=api_key)
+                }
             })
-        elif item['type'] == 'dir':  # If it's a directory, recursively fetch contents
+        elif (item['type'] == 'dir' and
+              item['name'] not in [".github"]):  # If it's a directory, recursively fetch contents
             md_files += await fetch_md_files(session, repo_full_name, api_key, item['path'])
 
     return md_files
@@ -118,28 +120,33 @@ async def fetch_last_modified_date(session: aiohttp.ClientSession, repo_full_nam
             return "Unknown"
 
 
+async def fetch_file_content(url: str) -> str:
+    """
+    Fetch the content of the given file URL using aiohttp.
+    """
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                return await response.text()
+            else:
+                print(f"Failed to fetch file: {response.status}")
+                return ""
+
+
 async def scrape_md_files(org_name: str, api_key: str, repo_limit=None) -> list[dict]:
     """
     Main function to scrape .md files from all repositories in the organization.
     Returns a list of dictionaries containing the repo_full_name, path, self_url,
     html_url, git_url, download_url and last_modified.
     """
+    # Use this if you are having error with ssl
+    # async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl.create_default_context(cafile=certifi.where()))) as session:
     async with aiohttp.ClientSession() as session:
         repos = await fetch_repositories(session, org_name, api_key, repo_limit)
 
         # Create async tasks for each repo to fetch .md files concurrently
         tasks = [fetch_md_files(session, repo['full_name'], api_key) for repo in repos]
-
         all_md_files = await asyncio.gather(*tasks)
 
         # Flatten the list of lists into a single list
-        md_files = [md_file for repo_files in all_md_files for md_file in repo_files]
-
-        for md_file in md_files:
-            md_file['last_modified'] = await fetch_last_modified_date(
-                session,
-                repo_full_name=md_file['repo_full_name'],
-                file_path=md_file['path'],
-                api_key=api_key
-            )
-        return md_files
+        return [md_file for repo_files in all_md_files for md_file in repo_files]
