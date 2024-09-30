@@ -2,7 +2,7 @@ from haystack import Pipeline
 from haystack.core.serialization import DeserializationCallbacks
 from typing import Type, Dict, Any
 import gradio as gr
-
+import os
 
 def component_pre_init_callback(component_name: str, component_cls: Type, init_params: Dict[str, Any]):
     # This function gets called every time a component is deserialized.
@@ -54,5 +54,5 @@ with gr.Blocks() as interface:
     # Set the enter key behavior for the input box
     input_box.submit(fn=lambda question: ask_question(question, my_pipeline), inputs=input_box, outputs=output_box)
 
-# Launch the Gradio app with sharing
-interface.launch(share=True)
+# Launch the Gradio app with sharing and authentication
+interface.launch(share=True, auth=("user", os.getenv("GRADIO_KEY")))
