@@ -1,0 +1,113 @@
+components:
+  answer_builder:
+    init_parameters:
+      pattern: null
+      reference_pattern: null
+    type: haystack.components.builders.answer_builder.AnswerBuilder
+  generator:
+    init_parameters:
+      api_base_url: null
+      api_key:
+        env_vars:
+        - OPENAI_API_KEY
+        strict: true
+        type: env_var
+      generation_kwargs: {}
+      model: gpt-4o-mini
+      organization: null
+      streaming_callback: null
+      system_prompt: null
+    type: haystack.components.generators.openai.OpenAIGenerator
+  prompt_builder:
+    init_parameters:
+      required_variables: null
+      template: "You are a knowledgeable assistant responsible for creating comprehensive\
+        \ documentation based on the following list of documents that refer to the\
+        \ user\u2019s question. The content of these documents may contradict each\
+        \ other, so please prioritize the information from the documents with the\
+        \ most recent dates. If there are contradicting documents with dates labeled\
+        \ as 'None', provide all alternatives and explicitly indicate which parts\
+        \ contradict one another. However, if a document with date labeled as 'None'\
+        \ does not conflict with others, it should be included without special mention.\n\
+        \nInstructions:\n2. Analyze the Documents:\n   - Review each document, noting\
+        \ any conflicting information.\n   - Prioritize information from the most\
+        \ recent documents.\n3. Handling Documents with 'None' Date:\n   - If a document\
+        \ has a date marked as 'None':\n     - Include all relevant alternatives and\
+        \ clearly indicate contradictions.\n     - If it does not conflict with other\
+        \ documents, include it without special mention.\n\nOutput Format:\nYour output\
+        \ should be structured using Markdown and include the following sections:\n\
+        1. Summary:\n   - Provide a brief overview of the key findings from all documents.\n\
+        2. Detailed Analysis:\n   - Present detailed descriptions of key points, prioritizing\
+        \ the latest information.\n   - Preserve and format any code snippets from\
+        \ the documents appropriately.\n   - Present full semantic context retrieved\
+        \ from given documents.\n3. Contradictions:\n   - For documents dated 'None',\
+        \ list all relevant alternatives and explicitly highlight any contradictions.\n\
+        \   - Do not generate this section if there are no contradictions.\n\nGeneral\
+        \ Guidelines:\n- Ensure thoroughness by including all relevant information,\
+        \ aiming for completeness rather than brevity.\n- Use headings, lists, and\
+        \ code blocks to enhance readability and organization.\n- Given .md files\
+        \ should be the base structure of generated file. If .md files are poor, treat\
+        \ them as regular source.\n\nUser Question: {{question}}\nDocuments to Analyze:\n\
+        {% for doc in documents %}\nDate: {{doc.meta['date']}}\nTitle: {{doc.meta['title']}}\
+        \ - {{doc.meta['headline']}}\nContent: \n{{doc.content}}\n{% endfor %}"
+      variables: null
+    type: haystack.components.builders.prompt_builder.PromptBuilder
+  retriever:
+    init_parameters:
+      document_store:
+        init_parameters:
+          api_key:
+            env_vars:
+            - PINECONE_API_KEY
+            strict: true
+            type: env_var
+          batch_size: 100
+          dimension: 384
+          index: default
+          metric: cosine
+          namespace: default
+          spec:
+            serverless:
+              cloud: aws
+              region: us-east-1
+        type: haystack_integrations.document_stores.pinecone.document_store.PineconeDocumentStore
+      filter_policy: replace
+      filters: {}
+      top_k: 25
+    type: haystack_integrations.components.retrievers.pinecone.embedding_retriever.PineconeEmbeddingRetriever
+  text_embedder:
+    init_parameters:
+      batch_size: 32
+      device:
+        device: cuda:0
+        type: single
+      model: sentence-transformers/all-MiniLM-L6-v2
+      model_kwargs: null
+      normalize_embeddings: false
+      precision: float32
+      prefix: ''
+      progress_bar: true
+      suffix: ''
+      token:
+        env_vars:
+        - HF_API_TOKEN
+        - HF_TOKEN
+        strict: false
+        type: env_var
+      tokenizer_kwargs: null
+      truncate_dim: null
+      trust_remote_code: false
+    type: haystack.components.embedders.sentence_transformers_text_embedder.SentenceTransformersTextEmbedder
+connections:
+- receiver: retriever.query_embedding
+  sender: text_embedder.embedding
+- receiver: prompt_builder.documents
+  sender: retriever.documents
+- receiver: answer_builder.documents
+  sender: retriever.documents
+- receiver: generator.prompt
+  sender: prompt_builder.prompt
+- receiver: answer_builder.replies
+  sender: generator.replies
+max_loops_allowed: 100
+metadata: {}
