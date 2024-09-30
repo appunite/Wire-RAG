@@ -25,6 +25,8 @@ def load_pipeline_from_yaml(yaml_file_path):
 
 # Function to interact with the pipeline
 def ask_question(question, pipeline):
+    if question == "" or question is None:
+        return ""
     answer = pipeline.run({
         "text_embedder": {"text": question},
         "prompt_builder": {"question": question},
@@ -39,13 +41,18 @@ my_pipeline = load_pipeline_from_yaml('./pipeline.yml')
 # Set up Gradio interface with Blocks layout
 with gr.Blocks() as interface:
     gr.Markdown("# Wire RAG Documentation")  # Title
-    gr.Markdown("Ask a question and get a documentation answer.")
 
     input_box = gr.Textbox(label="Ask your question:", placeholder="Type your question here...", lines=1)
+
+    # Move the submit button above the output box
+    submit_btn = gr.Button("Submit")  # Submit button
     output_box = gr.Markdown(label="Answer:")  # Output field
 
-    submit_btn = gr.Button("Submit")  # Submit button
+    # Set the click function for the button
     submit_btn.click(fn=lambda question: ask_question(question, my_pipeline), inputs=input_box, outputs=output_box)
+
+    # Set the enter key behavior for the input box
+    input_box.submit(fn=lambda question: ask_question(question, my_pipeline), inputs=input_box, outputs=output_box)
 
 # Launch the Gradio app with sharing
 interface.launch(share=True)
