@@ -55,4 +55,4 @@ with gr.Blocks() as interface:
     input_box.submit(fn=lambda question: ask_question(question, my_pipeline), inputs=input_box, outputs=output_box)
 
 # Launch the Gradio app with sharing and authentication
-interface.launch(share=True, auth=("user", os.getenv("GRADIO_KEY")))
+interface.launch(share=False, auth=("user", os.getenv("GRADIO_KEY")))

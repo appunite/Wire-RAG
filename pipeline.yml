@@ -109,7 +109,7 @@ components:
     init_parameters:
       batch_size: 32
       device:
-        device: cuda:0
+        device: cpu
         type: single
       model: sentence-transformers/all-MiniLM-L6-v2
       model_kwargs: null
