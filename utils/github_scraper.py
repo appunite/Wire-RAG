@@ -1,6 +1,8 @@
 import aiohttp
 import asyncio
 import time
+from datetime import datetime
+
 
 async def handle_rate_limit(headers) -> None:
     """
@@ -70,7 +72,7 @@ async def fetch_last_modified_date(session: aiohttp.ClientSession, repo_full_nam
                                    file_path: str, api_key: str) -> str:
     """
     Fetches the last commit date for a given file in the repository by checking its commit history.
-    Returns the date in ISO 8601 format (e.g., "2023-09-26T12:34:56Z").
+    Returns the date in "%Y-%m-%d" format (e.g., "2023-09-26").
     This function handles rate limiting and retry logic for 403 errors.
     """
     url = f"https://api.github.com/repos/{repo_full_name}/commits"
@@ -88,7 +90,8 @@ async def fetch_last_modified_date(session: aiohttp.ClientSession, repo_full_nam
             if response.status == 200:
                 commits = await response.json()
                 if commits:
-                    return commits[0]['commit']['committer']['date']  # Last commit date
+                    return datetime.strptime(commits[0]['commit']['committer']['date'],
+                                             "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d")  # Last commit date
                 else:
                     return "Unknown"  # If no commits found, return "Unknown"
             elif response.status == 403:

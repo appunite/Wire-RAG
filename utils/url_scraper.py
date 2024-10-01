@@ -158,7 +158,7 @@ def get_latest_date(dates, date_formats):
     parsed_dates = [parse_date(date, date_formats) for date in dates]
     # Filter out any dates that couldn't be parsed and return the latest one
     valid_dates = [d for d in parsed_dates if d is not None]
-    return max(valid_dates).strftime('%Y-%m-%d') if valid_dates else "None"
+    return max(valid_dates).strftime('%Y-%m-%d') if valid_dates else "Unknown"
 
 
 def extract_date(my_soup: BeautifulSoup, date_formats, date_patterns) -> str:
@@ -208,7 +208,7 @@ def extract_content_and_metadata(url: str, date_formats: list[str], date_pattern
         response.raise_for_status()
 
         soup = BeautifulSoup(response.content, 'html.parser')
-        title = soup.title.string if soup.title else "None"
+        title = soup.title.string if soup.title else "Unknown"
         date = extract_date(soup, date_formats, date_patterns)
 
         content_by_headline = {}
