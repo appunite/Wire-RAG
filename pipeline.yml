@@ -18,6 +18,13 @@ components:
       streaming_callback: null
       system_prompt: null
     type: haystack.components.generators.openai.OpenAIGenerator
+  joiner:
+    init_parameters:
+      join_mode: concatenate
+      sort_by_score: true
+      top_k: null
+      weights: null
+    type: haystack.components.joiners.document_joiner.DocumentJoiner
   prompt_builder:
     init_parameters:
       required_variables: null
@@ -52,7 +59,7 @@ components:
         \ - {{doc.meta['headline']}}\nContent: \n{{doc.content}}\n{% endfor %}"
       variables: null
     type: haystack.components.builders.prompt_builder.PromptBuilder
-  retriever:
+  retriever_docs_wire:
     init_parameters:
       document_store:
         init_parameters:
@@ -63,9 +70,32 @@ components:
             type: env_var
           batch_size: 100
           dimension: 384
-          index: default
+          index: wire-rag
           metric: cosine
-          namespace: default
+          namespace: docs-wire
+          spec:
+            serverless:
+              cloud: aws
+              region: us-east-1
+        type: haystack_integrations.document_stores.pinecone.document_store.PineconeDocumentStore
+      filter_policy: replace
+      filters: {}
+      top_k: 15
+    type: haystack_integrations.components.retrievers.pinecone.embedding_retriever.PineconeEmbeddingRetriever
+  retriever_gh:
+    init_parameters:
+      document_store:
+        init_parameters:
+          api_key:
+            env_vars:
+            - PINECONE_API_KEY
+            strict: true
+            type: env_var
+          batch_size: 100
+          dimension: 384
+          index: wire-rag
+          metric: cosine
+          namespace: github-wireapp
           spec:
             serverless:
               cloud: aws
@@ -99,12 +129,18 @@ components:
       trust_remote_code: false
     type: haystack.components.embedders.sentence_transformers_text_embedder.SentenceTransformersTextEmbedder
 connections:
-- receiver: retriever.query_embedding
+- receiver: retriever_docs_wire.query_embedding
   sender: text_embedder.embedding
+- receiver: retriever_gh.query_embedding
+  sender: text_embedder.embedding
+- receiver: joiner.documents
+  sender: retriever_docs_wire.documents
+- receiver: joiner.documents
+  sender: retriever_gh.documents
 - receiver: prompt_builder.documents
-  sender: retriever.documents
+  sender: joiner.documents
 - receiver: answer_builder.documents
-  sender: retriever.documents
+  sender: joiner.documents
 - receiver: generator.prompt
   sender: prompt_builder.prompt
 - receiver: answer_builder.replies
