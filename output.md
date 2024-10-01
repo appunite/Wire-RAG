@@ -1,157 +1,71 @@
-# Comprehensive Documentation on Legal Hold
+# Comprehensive Documentation on Team Size and Server Management in Wire
 
 ## Introduction
 
-Legal Hold is a vital service offered within the Wire communication platform, aimed primarily at recording all communications from designated users in a secure environment for legal compliance purposes. This documentation details the structure, installation, configuration, and operational characteristics of the Legal Hold service, ensuring a thorough understanding of its functions, including its sub-services: Collector, Exporter, and Hold. 
+This documentation aims to provide a detailed overview of the infrastructure configuration options available for Wire, particularly for handling teams exceeding 500 users. It will explore the limits imposed on team sizes and conversation memberships, the necessary configurations for managing connections and resources, and best practices for server usage with extensive user bases. The information presented stems entirely from the extracted documents provided, ensuring clarity on how to optimize Wire for larger teams.
 
-The objective of this documentation is to serve as a comprehensive guide for system administrators and users, outlining the necessary steps for installation, configuration, and usage of the Legal Hold feature within a Wire installation. The information will be divided into logical sections that cover installation prerequisites, setup procedures, technical details about the sub-services, as well as usage and operational details.
+### Objectives of This Documentation:
+- Describe the maximum user limits within teams and conversations.
+- Explain configurations needed for handling larger teams in Brigade (Brig).
+- Provide guidance on file descriptor management for active connections.
+- Offer troubleshooting tips and strategies for effective server management.
 
-## Main Sections
+## Table of Contents
+1. [Maximum Team Sizes](#maximum-team-sizes)
+2. [Managing Large Teams](#managing-large-teams)
+   - 2.1 [Configuring Team Size](#configuring-team-size)
+   - 2.2 [Team Updates and WebSocket Notifications](#team-updates-and-websocket-notifications)
+3. [Conversation Membership Limits](#conversation-membership-limits)
+4. [File Descriptor Management](#file-descriptor-management)
+5. [Recap and Conclusions](#recap-and-conclusions)
 
-### 1. Overview of Legal Hold
+## Maximum Team Sizes
 
-Legal Hold is designed to ensure that specific communications from users within a Wire installation are maintained securely, particularly for engagements involving potential legal scrutiny. The service is particularly structured as follows:
+By default, the maximum number of users in a team within Wire is capped at **500**. However, this limit can be modified. The configuration in the Brig settings allows you to increase this limit through the following setting:
 
-- **Collector**: This sub-service is responsible for gathering conversations from individual users.
-- **Exporter**: This component takes care of exporting the collected conversations for storage.
-- **Hold**: The Hold service temporarily retains conversations until they are exported, ensuring that no data is lost.
+```yaml
+optSettings:
+  setMaxTeamSize: 501
+```
 
-#### Installation Workflow
+This adjustment permits the creation of teams with user counts higher than the standard limit. 
 
-A typical setup of the Legal Hold involved in a Wire installation follows these steps:
+### Important Notes:
+- If your team surpasses **2000 members**, some real-time team update events, such as notifications regarding new members joining, will not be delivered via WebSocket connections. However, this limitation does not significantly obstruct the overall functioning of the application.
+- Individual conversations, regardless of team size, maintain a strict upper limit of **2000** members. This cannot be overridden due to backend constraints that only support fan-out messaging to a maximum of 2000 recipients, which is an ongoing area for enhancement in future updates.
 
-1. Installation of the Legal Hold service on a dedicated server.
-2. Configuration of Team Settings to integrate the Legal Hold service.
-3. Selection of specific users to enable Legal Hold.
-4. Confirmation from these users acknowledging their awareness of the data collection.
-5. Activation of the Legal Hold service for these users, followed by the initiation of information collection.
+## Managing Large Teams
 
-### 2. Installing Legal Hold
+### Configuring Team Size
+To modify the maximum size of teams within your Wire infrastructure, follow these steps:
+1. Access the Brig configuration file.
+2. Locate the `optSettings` section.
+3. Insert or edit the `setMaxTeamSize` option as shown previously.
 
-The process for installing and running the Legal Hold service is adequately detailed. It begins with requirements for a server, which will support the service. In this documentation, Ubuntu 18.04 is used as the primary installation environment, although other operating systems could also be feasible.
+### Team Updates and WebSocket Notifications
+When handling a team that exceeds **2000** members, you should be aware:
+- Clients will not receive live websocket notifications for certain updates.
+- Despite this, regular functionality should remain intact for most applications.
 
-#### Installation Requirements
+## Conversation Membership Limits
 
-- PostgreSQL database: This is used for storing the collected data.
-- Git and Docker: These tools are essential for pulling the necessary code components.
+While teams can have flexible member limits beyond 500, it’s critical to note that conversation memberships are still restricted to **2000** participants. The backend architecture only permits sending a message to a maximum of 2000 recipients at a time, which is why this limit cannot be increased arbitrarily. Adjustments in this area are an ongoing endeavor.
 
-##### Step-by-step Installation Process
+## File Descriptor Management
 
-1. **Install PostgreSQL**:
-   ```bash
-   sudo apt update
-   sudo apt install postgresql
-   ```
+For servers hosting connections with many users, managing file descriptors becomes vital. Wire’s Restund server (used for TURN connections) requires careful monitoring of allocations associated with active participant connections. Each allocation between a participant requires **1 or 2 file descriptors.**
 
-2. **Change the Database Password**:
-   Enter the PostgreSQL console to change the password:
-   ```bash
-   sudo -u postgres psql
-   ```
-   Then execute the following command:
-   ```sql
-   ALTER USER postgres PASSWORD '<your-postgresql-password>';
-   ```
+### Recommendations:
+- Ensure your server's file descriptor limits are adequately increased if you operate with a larger user base. 
+- Currently, a single Restund server supports up to **64,000** allocations. If you anticipate exceeding this number during active calls, deploying additional Restund servers is necessary to maintain performance.
 
-3. **Create the legalhold Database**:
-   ```sql
-   CREATE DATABASE legalhold;
-   ```
+## Recap and Conclusions
 
-4. **Install Git and Docker**:
-   The commands for installation will depend on the specific environments being utilized.
+In summary, managing larger teams in Wire encompasses adjusting maximum team size settings, addressing limitations in conversation membership, and effectively managing file descriptors for connections. For infrastructure managers, maintaining these configurations ensures that user experiences remain seamless and efficient, even with rising numbers in team memberships.
 
-5. **Generate a Service Token**:
-   Example command for generating a service token (`SERVICE_TOKEN`):
-   ```bash
-   openssl rand -base64 32
-   ```
+Key takeaways include:
+- Default team limit is 500, extendable to 2000 with specific configurations.
+- Conversations capped at 2000 members, with backend limitations on message fan-out.
+- Monitoring and adjusting file descriptor allocations are essential for handling many active participants.
 
-6. **Run the Docker Container**:
-   You will finally run the actual Docker container for the Legal Hold service. An example command might look like this:
-   ```bash
-   docker run -d --name legalhold -e DB_URL=postgresql://<username>:<password>@localhost/legalhold legalhold-image
-   ```
-
-7. **Configure DNS**:
-   Setup DNS for your domain, directing `legal.<yourdomain>` to point to this service. Enabling HTTPS and maintaining TLS with your public key in PEM format is critically important in this configuration.
-
-### 3. Configuration of Legal Hold
-
-#### User Consent Mechanism
-
-Once a user accepts a legal hold request, the system adds a device, referred to as a **legal hold device**, to that user's account. Only team admins have the permission to remove this from a user's account. 
-
-##### API Requests for Managing Legal Hold
-
-1. **Request for legal hold by Admin**:
-   ```http
-   POST /teams/{tid}/legalhold/{uid}
-   ```
-   - Response: `201 Created`
-
-2. **User Approval**:
-   ```http
-   PUT /teams/{tid}/legalhold/{uid}/approve
-   {
-     "password": <user's password> // optional if no password
-   }
-   ```
-   - Response: `200 OK`
-
-3. **Admin Deletion of Legal Hold**:
-   ```http
-   DELETE /teams/{tid}/legalhold/{uid}
-   {
-     "password": <admin's password> // optional if no password
-   }
-   ```
-   - Response: `200 OK`
-
-4. **Get Legal Hold Status for Team Members**:
-   ```http
-   GET /team/{tid}/members
-   ```
-
-### 4. Event Handling for Legal Hold
-
-Legal Hold operates through specific events that are triggered within the Wire platform:
-  - **New legal hold request**:
-    ```json
-    {
-      "type": "user.legalhold-request",
-      "id": "UserID of the one for whom LH is being requested",
-      "last_prekey": "Last-prekey of the legal hold device",
-      "client": {"id": "Client ID of the legalhold device"}
-    }
-    ```
-  - **New legal hold enabled event**:
-    ```json
-    {
-      "type": "user.legalhold-enable",
-      "id": "UserID for whom LH was enabled"
-    }
-    ```
-  - **New legal hold disabled event**:
-    ```json
-    {
-      "type": "user.legalhold-disable",
-      "id": "UserID for whom LH was disabled"
-    }
-    ```
-
-These events are crucial for maintaining transparency and compliance among all team members.
-
-### 5. Conclusion
-
-The Legal Hold service within Wire serves as a comprehensive solution for ensuring that vital communication records are preserved for potential legal scrutiny, enhancing organizational compliance with corporate regulations. The process outlined in this documentation should enable administrators and users to effectively install, configure, and use the Legal Hold functionality.
-
-### 6. Unresolved Conflicts
-
-While multiple documents provided information regarding the setup and workflow of Legal Hold, it was noted that several sections repeated similar content. There were no explicit contradictions; rather, the information was largely redundant across sources.
-
-Documentation pertaining to updates and versioning processes was found in varying contexts but did not contradict previously established guidelines, suggesting that any new features or updates will likely adhere to the structures outlined here. 
-
----
-
-This documentation aims to provide clarity and in-depth understanding to users and administrators involved with the Legal Hold service on the Wire platform. The structured approach ensures that all pertinent details are captured, allowing for efficient implementation and management of the service.
+This documentation serves as a foundational guide for those looking to optimize their use of Wire for larger collaborative environments.

@@ -7,6 +7,8 @@ from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import requests
+from collections import defaultdict
+
 
 DATE_FORMATS = [
     '%Y-%m-%d',  # Format: 2024-09-20
@@ -202,7 +204,7 @@ def extract_content_and_metadata(url: str, date_formats: list[str], date_pattern
     try:
         # Use retry session for robust requests
         session = requests_retry_session()
-        response = session.get(url, timeout=10)
+        response = session.get(url, timeout=20)
 
         # Check if request was successful
         response.raise_for_status()
@@ -211,27 +213,31 @@ def extract_content_and_metadata(url: str, date_formats: list[str], date_pattern
         title = soup.title.string if soup.title else "Unknown"
         date = extract_date(soup, date_formats, date_patterns)
 
-        content_by_headline = {}
+        content_by_headline = defaultdict(str)
         current_header = None
 
         # Loop through the elements, keeping track of headlines and paragraphs
-        for element in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol']):
+        for element in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'pre']):
             if element.name.startswith('h'):
                 # Headline
                 current_header = element.get_text(strip=True)
                 current_header = current_header.replace("\n", "")
                 current_header = re.sub(r"\s+", " ", current_header)
+                current_header = re.sub(r'[^\x00-\x7F]+', '', current_header)
 
-            elif element.name in ['p', 'ul', 'ol'] and current_header:
+            elif element.name in ['p', 'pre'] and current_header:
                 # Append the text under the last seen headline
-                value = content_by_headline[current_header] if current_header in content_by_headline else ""
-                new_content = element.get_text(strip=True).replace('\n', ' ')
-                content_by_headline[current_header] = f"{value} {new_content}"
+                if element.name == 'pre':
+                    new_content = element.get_text(strip=False)
+                else:
+                    new_content = re.sub(r'\s+', ' ', element.get_text(strip=False)).replace("\n", " ")
+                content_by_headline[current_header] += f"\n{new_content}"
 
         result_dicts = []
         for headline, content in content_by_headline.items():
             result_dicts.append(
-                {"content": content, "metadata": {"url": url, "title": title, "headline": headline, "date": date}})
+                # [1:] because each content starts with '\n'
+                {"content": content[1:], "metadata": {"url": url, "title": title, "headline": headline, "date": date}})
 
         return result_dicts
 
