@@ -16,52 +16,14 @@ components:
       model: gpt-4o-mini
       organization: null
       streaming_callback: null
-      system_prompt: "Task: Generate comprehensive documentation based on the provided\
-        \ documents. The documentation should capture all essential details and information\
-        \ without any information loss, including relevant code fragments from the\
-        \ files. Ensure that the output does not cut corners on tokens; generate as\
-        \ much content as possible within the limits of the provided documents. Do\
-        \ not reference or include information from any sources other than the given\
-        \ documents, do not rely on your knowledge.\n\nRequirements:\n\n1. Length:\
-        \ The documentation should be detailed and extensive, covering all aspects\
-        \ of the content provided in the documents.\n\n2. Structure:\n   - Title Page:\
-        \ Include a title that reflects the main theme of the documents.\n   - Introduction:\
-        \ Provide a complete and thorough overview of the content, purpose, and scope\
-        \ of the documentation.\n   - Main Sections: Divide the documentation into\
-        \ logical sections and subsections based on the themes and topics found in\
-        \ the documents. Each section should include:\n     - A clear, descriptive\
-        \ heading that reflects the content within the section.\n     - Detailed explanations\
-        \ of key concepts and ideas. Expand on each idea or concept with thorough\
-        \ descriptions, definitions, and context. Ensure the reader fully understands\
-        \ the material.\n     - Code fragments: Where applicable, include relevant\
-        \ code snippets from the documents. These should be properly formatted and\
-        \ explained in detail. For each code snippet, provide a clear explanation\
-        \ of its purpose, functionality, and how it fits into the overall system or\
-        \ process described in the document.\n     - Examples: Provide relevant examples\
-        \ where applicable, explaining them fully to ensure understanding.\n     -\
-        \ Conflict Resolution: If there are contradictory pieces of information across\
-        \ different documents, resolve them using the date provided at the beginning\
-        \ of each document, prioritizing the most recent information. If a document\u2019\
-        s date is unknown and conflicts cannot be resolved, explicitly indicate which\
-        \ parts contradict one another, then clearly explain the contradiction. Mention\
-        \ all unresolved conflicts at the end of each section.\n\n3. Content Guidelines:\n\
-        \   - Ensure that all information from the documents is included and accurately\
-        \ represented.\n   - The content should not just list bullet points but should\
-        \ be expanded into full sentences and paragraphs where necessary, with elaboration\
-        \ and explanations for all points.\n   - Use clear and logical transitions\
-        \ between sections to maintain the flow and coherence of the document.\n \
-        \  - Use bullet points, tables, code fragments, or diagrams where appropriate\
-        \ to enhance understanding and readability, but always accompany these elements\
-        \ with in-depth explanations.\n\n4. Style: The writing style should be professional,\
-        \ formal, and suitable for an audience that may include technical experts,\
-        \ stakeholders, or general readers interested in the topic. Avoid jargon unless\
-        \ it is explained in detail.\n\n5. Specifics: Highlight any critical findings,\
-        \ data, or statistics that are present in the documents. For each significant\
-        \ point, explain its relevance and implications. Emphasize any unique or innovative\
-        \ aspects that stand out, and provide complete reasoning or analysis where\
-        \ needed.\n\nOutput Format: Ensure that the entire documentation is generated\
-        \ in Markdown format without any additional text or formatting. The output\
-        \ should be ready to be saved directly into a markdown file.\n"
+      system_prompt: 'You are an expert assistant skilled in generating structured,
+        comprehensive documentation. Your role is to create thorough, accurate documentation
+        based strictly on the provided context, without using external knowledge or
+        general information. The content must be divided into two main sections: one
+        for non-technical users and one for technical users, with each section tailored
+        to their needs. The output should be clear, detailed, and organized, including
+        code snippets, examples, and conflict resolution where applicable. Your final
+        output should be ready in Markdown format.'
     type: haystack.components.generators.openai.OpenAIGenerator
   joiner:
     init_parameters:
@@ -73,9 +35,45 @@ components:
   prompt_builder:
     init_parameters:
       required_variables: null
-      template: "\nUser Question: {{question}}\nDocuments to Analyze:\n{% for doc\
-        \ in documents %}\nDate: {{doc.meta['date']}}\nTitle: {{doc.meta['title']}}\
-        \ - {{doc.meta['headline']}}\nContent: \n{{doc.content}}\n{% endfor %}"
+      template: "**Task:**  \nGenerate comprehensive documentation based solely on\
+        \ the provided documents. **Do not use any external knowledge** or information\
+        \ outside of the provided context. Divide the documentation into two main\
+        \ sections:\n\n- **Non-Technical User:** Focus on explanations that are accessible\
+        \ to non-technical stakeholders (e.g., **business decision-makers or managers**).\
+        \ Highlight the purpose, value, and practical outcomes, avoiding technical\
+        \ jargon. Use examples and high-level explanations to ensure understanding.\n\
+        \n- **Technical User:** Provide in-depth technical content for an audience\
+        \ of **developers, engineers, or system architects**. Include detailed explanations\
+        \ of key technical concepts, code snippets with thorough descriptions, and\
+        \ examples where applicable. Explain the functionality and purpose of each\
+        \ code fragment, along with any potential issues or caveats.\n\n**Requirements:**\n\
+        \n1. **Length:** The documentation should be detailed and cover all aspects\
+        \ of the provided content.\n\n2. **Structure:**  \n   - **Title Page:** Include\
+        \ a title reflecting the main theme of the documents.  \n   - **Introduction:**\
+        \ Provide a clear overview of the content, purpose, and scope of the documentation.\
+        \  \n   - **Non-Technical User Section:**  \n     - Clear, high-level explanations\
+        \ that avoid technical depth.  \n     - Emphasize the **purpose, benefits,\
+        \ and outcomes** for non-technical users.  \n     - Include examples and **highlight\
+        \ key points** with bold text where necessary.  \n   - **Technical User Section:**\
+        \  \n     - Detailed explanations of key technical concepts.  \n     - Include\
+        \ well-explained code snippets, with a focus on their **practical application**\
+        \ and any **potential pitfalls**.  \n     - **Conflict Resolution:** If conflicting\
+        \ information is present, resolve it using the document date or highlight\
+        \ unresolved contradictions **inline** within the relevant sections.\n\n3.\
+        \ **Content Guidelines:**  \n   - Represent all information accurately from\
+        \ the documents.  \n   - Expand bullet points into full sentences and paragraphs.\
+        \  \n   - Use bullet points, tables, or code fragments where necessary, with\
+        \ in-depth explanations.  \n   - Ensure smooth transitions between sections.\n\
+        \n4. **Style:**  \n   - The non-technical section should be accessible and\
+        \ easy to understand.  \n   - The technical section should be professional\
+        \ and formal, with precise technical language.\n\n5. **Specifics:**  \n  \
+        \ - Highlight any critical findings, data, or statistics from the documents.\
+        \  \n   - Emphasize unique aspects with full reasoning and analysis.  \n \
+        \  - If any sections lack sufficient detail, indicate **gaps or missing information**\
+        \ rather than assuming or fabricating content.\n\n\nUser Question: {{question}}\n\
+        Documents to Analyze:\n{% for doc in documents %}\nDate: {{doc.meta['date']}}\n\
+        Title: {{doc.meta['title']}} - {{doc.meta['headline']}}\nContent: \n{{doc.content}}\n\
+        {% endfor %}"
       variables: null
     type: haystack.components.builders.prompt_builder.PromptBuilder
   retriever_docs_wire:
